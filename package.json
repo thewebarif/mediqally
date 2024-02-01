@@ -7,6 +7,11 @@
         "ghost": ">=5.0.0"
     },
     "license": "MIT",
+    "screenshots": {
+        "desktop": "assets/screenshot-desktop.jpg",
+        "mobile": "assets/screenshot-mobile.jpg"
+    },
+
     "scripts": {
         "dev": "gulp",
         "zip": "gulp zip",
@@ -40,6 +45,12 @@
     },
     "bugs": "https://github.com/TryGhost/Source/issues",
     "contributors": "https://github.com/TryGhost/Source/graphs/contributors",
+    "dependencies": {
+
+        "jquery": "^3.6.3",
+        "jquery.easing": "^1.4.1",
+        "tailwindcss": "^3.2.4"
+    },
     "devDependencies": {
         "@tryghost/release-utils": "0.8.1",
         "autoprefixer": "10.4.7",
@@ -58,6 +69,8 @@
         "pump": "3.0.0",
         "tailwindcss": "^3.2.4"
     },
+    "homepage": "https://github.com/themeix/gulp-quickstart-pack#readme",
+    "main": "gulpfile.js",
     "browserslist": [
         "defaults"
     ],
@@ -200,4 +213,5 @@
             "@tryghost:theme"
         ]
     }
+    
 }

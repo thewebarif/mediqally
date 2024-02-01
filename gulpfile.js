@@ -1,174 +1,247 @@
-const {series, watch, src, dest, parallel} = require('gulp');
-const pump = require('pump');
-const path = require('path');
-const releaseUtils = require('@tryghost/release-utils');
-const inquirer = require('inquirer');
+/*!
+ * Themeix Gulp Package (https://themeix.com/)
+ * Copyright 2016-2020 themeix team
+ * Licensed under MIT
+ * Available Main Task Command : gulp, zip
+ */
+(function () {
+    'use strict';
+    /*
+    =============================
+        Let's see all CSS/JS Plugin into [package.json]
+    =============================
+    */
+    var File_Name = 'ghost-abzu.zip';
+    var CSS_Files = [
+    
+    './assets/css/screen.css'
+  
+   
+    ];
+    var JS_Files = [
+    './node_modules/jquery/dist/jquery.min.js',
+    './node_modules/jquery.easing/jquery.easing.min.js',
+    './assets/js/app.js',
+    
+    ];
 
-// gulp plugins and utils
-const livereload = require('gulp-livereload');
-const postcss = require('gulp-postcss');
-const zip = require('gulp-zip');
-const concat = require('gulp-concat');
-const uglify = require('gulp-uglify');
-const beeper = require('beeper');
-const fs = require('fs');
 
-// postcss plugins
-const autoprefixer = require('autoprefixer');
-const cssnano = require('cssnano');
-const easyimport = require('postcss-easy-import');
 
-const REPO = 'TryGhost/Source';
-const REPO_READONLY = 'TryGhost/Source';
-const CHANGELOG_PATH = path.join(process.cwd(), '.', 'changelog.md');
+        
+/*
+=============================
+    Include Gulp & Plugins
+=============================  
+*/
+var gulp = require('gulp'),
+cleanCSS = require('gulp-clean-css'),
+autoprefixer = require('gulp-autoprefixer'),
+concat = require('gulp-concat'),
+rename = require('gulp-rename'),
+uglify = require('gulp-uglify'),
+terser = require('gulp-terser'),
+jshint = require('gulp-jshint'),
+plumber = require('gulp-plumber'),
+c = require('ansi-colors'),
+replace = require('gulp-replace'),
+size = require('gulp-size'),
+zip = require('gulp-zip'),
 
-function serve(done) {
-    livereload.listen();
-    done();
-}
+// postcss      = require('postcss'),
+atimport = require("postcss-import"),
+purgecss = require("@fullhuman/postcss-purgecss"),
+tailwindcss = require("tailwindcss"),
 
-const handleError = (done) => {
-    return function (err) {
-        if (err) {
-            beeper();
-        }
-        return done(err);
-    };
-};
+del = require('del'),
+gulpCopy = require('gulp-copy'),
+runSequence = require('run-sequence'),
+inject = require('gulp-inject'),
+postcss = require("gulp-postcss");
 
-function hbs(done) {
-    pump([
-        src(['*.hbs', 'partials/**/*.hbs']),
-        livereload()
-    ], handleError(done));
-}
+gulp.task('clean', function() {
+return del('dist', {
+    force: true
+});
+});
+gulp.task('copy_css_files', function(done) {
+return gulp.src(CSS_Files)
+    .pipe(gulp.dest('./dist/production/assets/css'))
+    .pipe(size())
+done();
+});
 
-function css(done) {
-    pump([
-        src('assets/css/screen.css', {sourcemaps: true}),
-        postcss([
-            easyimport,
-            autoprefixer(),
-            cssnano()
-        ]),
-        dest('assets/built/', {sourcemaps: '.'}),
-        livereload()
-    ], handleError(done));
-}
+gulp.task('copy_js_files', function(done) {
+return gulp.src(JS_Files)
+    .pipe(gulp.dest('./dist/production/assets/js'))
+    .pipe(size())
 
-function js(done) {
-    pump([
-        src([
-            // pull in lib files first so our own code can depend on it
-            'assets/js/lib/*.js',
-            'assets/js/*.js'
-        ], {sourcemaps: true}),
-        concat('source.js'),
-        uglify(),
-        dest('assets/built/', {sourcemaps: '.'}),
-        livereload()
-    ], handleError(done));
-}
+done();
+});
 
-function zipper(done) {
-    const filename = require('./package.json').name + '.zip';
+gulp.task('copy_all_files', function(done) {
+return gulp.src([
+        './**/*',
+        '!.jshintignore',
+        '!.jshintrc',
+        '!bower.json',
+        '!gulpfile.js',
+        '!package.json',
+        '!package-lock.json', 
+        '!.gitattributes',
+        '!gitignore',
+        '!README.md', 
+        '!.gitignore',
+        '!./node_modules/**',
+        '!./bower_components/**',
+        '!./dist/**',
+        '!./git/**'
+    ])
+    .pipe(gulp.dest('./dist/production'))
+    .pipe(size())
+done(); 
+});
 
-    pump([
-        src([
-            '**',
-            '!node_modules', '!node_modules/**',
-            '!dist', '!dist/**',
-            '!yarn-error.log',
-            '!yarn.lock',
-            '!gulpfile.js'
-        ]),
-        zip(filename),
-        dest('dist/')
-    ], handleError(done));
-}
+gulp.task('inject_code_html', function(cb) {
+return gulp.src('./dist/production/*.html') //file with tags for injection
+    .pipe(inject(gulp.src(Production_JS_Files), {
+        starttag: '<!-- gulp:{{ext}} -->',
+        endtag: '<!-- endgulp -->',
+        relative: true
+    }))
+    .pipe(gulp.dest('./dist/production')); //where index.html will be saved. Same dir for overwrite old one
+})
+gulp.task('inject_code_html_2', function(cb) {
+return gulp.src('./dist/production/*.html') //file with tags for injection
+    .pipe(inject(gulp.src(Production_CSS_Files), {
+        starttag: '<!-- gulp:{{ext}} -->',
+        endtag: '<!-- endgulp -->',
+        relative: true
+    }))
+    .pipe(gulp.dest('./dist/production')); //where index.html will be saved. Same dir for overwrite old one
+})
 
-const cssWatcher = () => watch('assets/css/**', css);
-const jsWatcher = () => watch('assets/js/**', js);
-const hbsWatcher = () => watch(['*.hbs', 'partials/**/*.hbs'], hbs);
-const watcher = parallel(cssWatcher, jsWatcher, hbsWatcher);
-const build = series(css, js);
+gulp.task('remove_extra_code', function() {
+return gulp.src('./dist/production/*.html')
+    .pipe(replace('<link rel="stylesheet" href="assets/css/app.min.css">', ''))
+    .pipe(replace('<script src="assets/js/build.min.js"></script>', ''))
+    .pipe(gulp.dest('./dist/production'))
+});
+ 
 
-exports.build = build;
-exports.zip = series(build, zipper);
-exports.default = series(build, serve, watcher);
+gulp.task('vendor', function(done) {
+return gulp.src(CSS_Files)
+    .pipe(concat('vendors.css'))
+    .pipe(postcss())
+    .pipe(gulp.dest('./assets/css'))
+    .pipe(size())
+done();
+});
 
-exports.release = async () => {
-    // @NOTE: https://yarnpkg.com/lang/en/docs/cli/version/
-    // require(./package.json) can run into caching issues, this re-reads from file everytime on release
-    let packageJSON = JSON.parse(fs.readFileSync('./package.json'));
-    const newVersion = packageJSON.version;
+gulp.task('tw', function(done) {
+return gulp.src('./node_modules/tailwindcss/tailwind.css')
+ //   .pipe(concat('vendors.css'))
+    .pipe(postcss())
+    .pipe(concat('tailwind.css'))
+    .pipe(gulp.dest('./assets/css'))
+ 
 
-    if (!newVersion || newVersion === '') {
-        console.log(`Invalid version: ${newVersion}`);
-        return;
-    }
+    .pipe(rename({
+        suffix: '.min'
+    }))
 
-    console.log(`\nCreating release for ${newVersion}...`);
+    .pipe(cleanCSS())
+    .pipe(autoprefixer({
+        cascade: false
+    }))
+    .pipe(gulp.dest('./assets/css'))
+    .pipe(size())
+done();
+});
 
-    const githubToken = process.env.GST_TOKEN;
+gulp.task('vendor_minified', function(done) {
+return gulp.src(CSS_Files)
+   .pipe(concat('vendors.css'))
 
-    if (!githubToken) {
-        console.log('Please configure your environment with a GitHub token located in GST_TOKEN');
-        return;
-    }
+ // NEED TO ADD TAILWIND PRE PROSS TO OPTIMIZE FILE SIZE
+ //   .pipe(postcss())
+    .pipe(rename({
+        suffix: '.min'
+    }))
 
-    try {
-        const result = await inquirer.prompt([{
-            type: 'input',
-            name: 'compatibleWithGhost',
-            message: 'Which version of Ghost is it compatible with?',
-            default: '5.0.0'
-        }]);
+    .pipe(cleanCSS())
+    .pipe(autoprefixer({
+        cascade: false
+    }))
+    .pipe(gulp.dest('./assets/css'))
+    .pipe(size())
+done();
+});
+gulp.task('js', function(done) {
+return gulp.src(JS_Files)
+    .pipe(jshint())
+    .pipe(jshint.reporter('jshint-stylish'))
+    .pipe(concat('build.js'))
+    .pipe(rename({
+        suffix: '.min'
+    }))
+    .pipe(terser())
+    .pipe(gulp.dest('./assets/js'))
+    .pipe(size())
+done();
+});
+gulp.task('app_css', function(done) {
+return gulp.src(['./assets/css/vendors.min.css', './assets/css/tailwind.min.css', './assets/css/custom.css'])
+    .pipe(concat('app.css'))
+    .pipe(autoprefixer({
+        cascade: false
+    }))
+    .pipe(cleanCSS())
+    .pipe(rename({
+        suffix: '.min'
+    }))
+    .pipe(gulp.dest('./assets/css'))
+    .pipe(size())
+done();
+});
+gulp.task('zip', function(done) {
+gulp.src([
+        './**/*',
+        '.jshintignore',
+        '.jshintrc',
+        '!.gitattributes',
+        '!README.md',
+        '!.gitignore',
+        '!./node_modules/**',
+        '!./bower_components/**',
+        '!./dist/**',
+        '!./git/**'
+    ])
+    .pipe(zip('dev-' + File_Name))
+    .pipe(gulp.dest('dist'))
+    .pipe(size())
+done();
+});
+gulp.task('watch', function() {
+gulp.watch('tailwind.config.js', gulp.series('build_css'));
+gulp.watch('./assets/css/custom.css', gulp.series('build_css'));
+gulp.watch(['./assets/js/app.js'], gulp.series('js'));
+gulp.watch('*.html', gulp.series('build_css'));
+});
+gulp.task(
+'build_css',
+gulp.series('tw', 'vendor_minified', 'app_css')
+);
+gulp.task(
+'build',
+gulp.series('build_css', 'js')
+);
+gulp.task(
+'production',
+gulp.series('clean', 'copy_all_files', 'copy_css_files', 'copy_js_files', 'inject_code_html', 'inject_code_html_2', 'remove_extra_code',  'zip', )
+);
+gulp.task(
+'default',
+gulp.series('build', 'watch')
+);
 
-        const compatibleWithGhost = result.compatibleWithGhost;
-
-        const releasesResponse = await releaseUtils.releases.get({
-            userAgent: 'Source',
-            uri: `https://api.github.com/repos/${REPO_READONLY}/releases`
-        });
-
-        if (!releasesResponse || !releasesResponse) {
-            console.log('No releases found. Skipping...');
-            return;
-        }
-
-        let previousVersion = releasesResponse[0].tag_name || releasesResponse[0].name;
-        console.log(`Previous version: ${previousVersion}`);
-
-        const changelog = new releaseUtils.Changelog({
-            changelogPath: CHANGELOG_PATH,
-            folder: path.join(process.cwd(), '.')
-        });
-
-        changelog
-            .write({
-                githubRepoPath: `https://github.com/${REPO}`,
-                lastVersion: previousVersion
-            })
-            .sort()
-            .clean();
-
-        const newReleaseResponse = await releaseUtils.releases.create({
-            draft: true,
-            preRelease: false,
-            tagName: 'v' + newVersion,
-            releaseName: newVersion,
-            userAgent: 'Source',
-            uri: `https://api.github.com/repos/${REPO}/releases`,
-            github: {
-                token: githubToken
-            },
-            content: [`**Compatible with Ghost ≥ ${compatibleWithGhost}**\n\n`],
-            changelogPath: CHANGELOG_PATH
-        });
-        console.log(`\nRelease draft generated: ${newReleaseResponse.releaseUrl}\n`);
-    } catch (err) {
-        console.error(err);
-        process.exit(1);
-    }
-};
+})();

@@ -6,6 +6,10 @@
     <title>{{meta_title}}</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+     <!-- gulp:css -->
+      <link rel="stylesheet" href="{{asset 'css/app.min.css'}}">
+      <!-- endgulp -->
     
     {{!-- Preload main styles and scripts for better performance --}}
     <link rel="preload" as="style" href="{{asset "built/screen.css"}}">
@@ -49,6 +53,10 @@
     {{{body}}}
     
     {{> "components/footer"}}
+
+       <!-- gulp:js -->
+      <script src="{{asset 'js/build.min.js'}}"></script>
+      <!-- endgulp -->
     
 </div>
 
