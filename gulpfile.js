@@ -26,6 +26,16 @@
     ];
 
 
+    var Production_CSS_Files = [ 
+        './dist/production/assets/css/tailwind.min.css',  
+        './dist/production/assets/css/custom.css',
+    ]; 
+    var Production_JS_Files = [ 
+        './dist/production/assets/js/jquery.min.js',
+        './dist/production/assets/js/app.js'  
+    ];
+
+
 
         
 /*

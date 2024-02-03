@@ -1,0 +1,60 @@
+.is-active ul.dropdown-menu {
+    display: block;
+    top: 76px;
+    width: 100%;
+    left: 0;
+    right: 0;
+}
+
+
+
+
+
+@media only screen and (min-width:767px) {
+    .dropdown-menu ul.nav {
+        -moz-column-width: 17rem;
+        column-width: 17rem;
+        display: block!important;
+        max-width: 100%;
+        width: 1320px;
+        margin: auto;
+    }
+    
+    
+    ul.dropdown-menu.hidden {
+        box-shadow: 0 3px 5px 0 rgba(33,57,72,.29);
+        border-radius: 0;
+        z-index: 9;
+        padding: 80px;
+    }
+
+    ul.dropdown-menu.hidden {
+        position: absolute;
+        z-index: 99;
+    }
+  }
+
+
+  @media only screen and (max-width:767px) {
+
+    
+  nav.gh-navigation-menu {
+    display: flex;
+    flex-direction: column;
+}
+    
+  }
+
+  span.toggle-dropdown svg {
+    height: 7px;
+    width: 30px;
+    min-width: 32px;
+}
+
+li.dropdown-dots.is-active svg {
+    transform: rotate(181deg);
+}
+.gh-card-tag {
+
+    display: block!important;
+}
